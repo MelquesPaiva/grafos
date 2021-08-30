@@ -5,6 +5,8 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <vector>
+#include <stack>
+#include <list>
 #include <string>
 #include <fstream>
 

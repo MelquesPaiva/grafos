@@ -3,6 +3,11 @@
 
 using namespace std;
 
+int** matrix;
+int nods = 0;
+int edges = 0;
+list<int> *adjacencyList;
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -14,10 +19,6 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
-
-int** matrix;
-int nods = 0;
-int edges = 0;
 
 void MainWindow::on_btn_open_file_clicked()
 {
@@ -56,6 +57,8 @@ void MainWindow::on_btn_open_file_clicked()
         line++;
     }
 
+    adjacencyList = new list<int>[nods];
+
     matrix = new int*[nods];
     for (int i = 0; i < nods; i++) {
         matrix[i] = new int[nods];
@@ -74,6 +77,8 @@ void MainWindow::on_btn_open_file_clicked()
 
         int x = std::stoi(values.at(0)) - 1;
         int y = std::stoi(values.at(1)) - 1;
+
+        adjacencyList[x].push_back(y);
 
         matrix[x][y] = 1;
         matrix[y][x] = 1;
@@ -96,25 +101,43 @@ void MainWindow::on_btn_verify_connection_clicked()
     QMessageBox msg;
     int position1 = int(ui->le_first_field->text().toInt());
     int position2 = int(ui->le_second_field->text().toInt());
-    vector<int> connections;
-    vector<int> path;
+
+    stack<int> connections;
+    bool visited[nods];
 
     for (int i = 0; i < nods; i++) {
-        if (matrix[position1][i] == 1) {
-            connections.push_back(i);
+        visited[i] = false;
+    }
+
+    while (true) {
+        if (!visited[position1]) {
+            visited[position1] = true;
+            connections.push(position1);
+        }
+
+        bool find = false;
+        list<int>::iterator it;
+
+        for (it = adjacencyList[position1].begin(); it != adjacencyList[position1].end(); it++) {
+            if (!visited[*it]) {
+                find = true;
+                break;
+            }
+        }
+
+        if (find) {
+            position1 = *it;
+        } else {
+            connections.pop();
+            if (connections.empty()) {
+                break;
+            }
+
+            position1 = connections.top();
         }
     }
 
-    if (connections.size() == 0) {
-        msg.setWindowTitle("Sem conexão");
-        msg.setText("O nó apresentado não tem nenhuma conexão");
-        msg.exec();
-
-        return;
-    }
-
-    // Verificando se o segundo elemento foi encontrado como conexão no primeiro nível
-    if (std::find(connections.begin(), connections.end(), position2) != connections.end()) {
+    if (visited[position2]) {
         msg.setWindowTitle("Conexões");
         msg.setText("Existe conexão entre " + QString::number(position1) + " e " + QString::number(position2));
         msg.exec();
@@ -125,8 +148,6 @@ void MainWindow::on_btn_verify_connection_clicked()
     msg.setWindowTitle("Sem conexão");
     msg.setText("Não existem conexões entre os dois nós");
     msg.exec();
-
-    return;
 }
 
 /**
